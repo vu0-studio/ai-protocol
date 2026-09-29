@@ -49,7 +49,7 @@ class BootstrapTest(unittest.TestCase):
     def assert_complete(self, p):
         self.assertIn("Bootstrap structure created successfully.", p.stdout, p.stderr)
         self.assertIn("ai-check exit code:", p.stdout)
-        self.assertEqual(p.returncode, 1, p.stdout)  # faithful LOCAL-ONLY checker result
+        self.assertEqual(p.returncode, 0, p.stdout)  # LOCAL-ONLY accepted by bootstrap
 
     def test_not_git_no_files(self):
         folder = self.root / "outside"
@@ -141,7 +141,7 @@ class BootstrapTest(unittest.TestCase):
         self.assertIn('"origin status": "LOCAL-ONLY"', p.stdout)
         self.assertIn("STATUS: LOCAL-ONLY", p.stdout)
         self.assertNotIn("Manual push", p.stdout)
-        self.assertEqual(p.returncode, 1)
+        self.assertEqual(p.returncode, 0)
 
     def test_origin_never_pushed_checker_does_not_fetch_or_run_hooks(self):
         remote = self.root / "remote.git"
@@ -219,12 +219,14 @@ class BootstrapTest(unittest.TestCase):
         self.assertTrue((self.root / "AGENTS.md").exists())
         self.assertFalse((folder / "AGENTS.md").exists())
 
-    def test_existing_handoff_reused_for_missing_state(self):
+    def test_missing_state_gets_new_handoff(self):
         name = "ai/handoffs/20260101T000000Z-human-task.md"
         self.seed({name: b"---\nhead_sha: none\n---\n"})
         self.assert_complete(self.run_bootstrap())
-        self.assertEqual(len(list((self.root / "ai/handoffs").glob("*.md"))), 1)
-        self.assertIn(name, (self.root / "ai/STATE.md").read_text())
+        handoffs = sorted((self.root / "ai/handoffs").glob("*.md"))
+        self.assertEqual(len(handoffs), 2)
+        self.assertEqual((self.root / name).read_bytes(), b"---\nhead_sha: none\n---\n")
+        self.assertIn(handoffs[-1].name, (self.root / "ai/STATE.md").read_text())
 
     def test_renamed_dirty_paths_preserved(self):
         self.seed({"old name.txt": b"user"})
@@ -267,10 +269,52 @@ class BootstrapTest(unittest.TestCase):
         self.assertIn("Expected directory", p.stderr)
         self.assertFalse((self.root / "AGENTS.md").exists())
 
-    def test_template_matches_accepted_source(self):
-        root = Path(__file__).resolve().parents[1]
-        self.assertEqual((root / "templates/AGENTS.md").read_text(),
-                         (root / "src/ai_protocol/templates/AGENTS.md").read_text())
+    def test_packaged_template_is_used(self):
+        self.assert_complete(self.run_bootstrap())
+        template = bootstrap.resources.files("ai_protocol").joinpath("templates/AGENTS.md").read_bytes()
+        self.assertEqual((self.root / "AGENTS.md").read_bytes(), template.replace(b"\r\n", b"\n"))
+
+    def test_repair_creates_new_committed_handoff(self):
+        self.assert_complete(self.run_bootstrap())
+        original = {p.name: p.read_bytes() for p in (self.root / "ai/handoffs").glob("*.md")}
+        state = (self.root / "ai/STATE.md").read_bytes()
+        self.write(".gitignore", b"ai/logs/\n")
+        self.git("add", "--", ".gitignore")
+        self.git("commit", "-qm", "remove protocol ignore entries")
+        self.assert_complete(self.run_bootstrap())
+        handoffs = sorted((self.root / "ai/handoffs").glob("*.md"))
+        self.assertEqual(len(handoffs), 2)
+        for name, data in original.items():
+            self.assertEqual((self.root / "ai/handoffs" / name).read_bytes(), data)
+        self.assertEqual((self.root / "ai/STATE.md").read_bytes(), state)
+        changed = self.git("diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD").decode()
+        self.assertIn(handoffs[-1].name, changed)
+        p = subprocess.run([sys.executable, "-m", "ai_protocol.check", "--close", "--allow-local"],
+                           cwd=self.root, env=self.env, capture_output=True, text=True, timeout=90)
+        self.assertIn("[PASS] HEAD commit is a handoff commit", p.stdout)
+        self.assertIn("[PASS] latest handoff committed at HEAD", p.stdout)
+
+    def test_blocked_checker_returns_one(self):
+        self.git("remote", "add", "origin", str(self.root / "missing-remote.git"))
+        p = self.run_bootstrap()
+        self.assertIn("Bootstrap structure created successfully.", p.stdout)
+        self.assertIn("STATUS: BLOCKED", p.stdout)
+        self.assertIn("ai-check exit code: 1", p.stdout)
+        self.assertEqual(p.returncode, 1)
+
+    def test_stop_returns_one(self):
+        self.git("config", "user.email", "")
+        p = self.run_bootstrap()
+        self.assertIn("STOP", p.stderr)
+        self.assertEqual(p.returncode, 1)
+
+    def test_both_versions(self):
+        for module, command in (("check", "ai-check"), ("bootstrap", "ai-bootstrap")):
+            with self.subTest(command=command):
+                p = subprocess.run([sys.executable, "-m", "ai_protocol." + module, "--version"],
+                                   cwd=self.root, env=self.env, capture_output=True, text=True)
+                self.assertEqual(p.returncode, 0)
+                self.assertEqual(p.stdout.strip(), command + " 0.2.0")
 
     def test_concurrent_user_change_stops_before_staging(self):
         self.seed()

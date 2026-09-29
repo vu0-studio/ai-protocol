@@ -6,5 +6,8 @@ User-approved scope: sibling CLI, stdlib only, mechanical protocol scaffolding, 
 bootstrap commit, no push. Preserve dirty bytes and index entries. Existing checker
 remains read-only. No project setup/test/lint/build execution by bootstrap.
 
-Validation: 24 new bootstrap safety/integration tests plus 4 existing checker regressions
-pass (28 total). Wheel build/install and actual console-script scratch smoke passed.
+Review fixes delivered in package 0.2.0: LOCAL-ONLY exits 0; writing repairs record a new
+handoff; one packaged AGENTS template; branch-before-bootstrap and hook-bypass documentation.
+
+Validation: 32 tests pass. Wheel build/install and installed console-script smoke tests
+with and without origin pass (exit 0 for READY and LOCAL-ONLY). Publication scan passed.

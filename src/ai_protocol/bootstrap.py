@@ -9,6 +9,7 @@ import re
 import stat
 import subprocess
 import sys
+import time
 from datetime import datetime, timezone
 
 from . import __version__
@@ -153,13 +154,18 @@ def run(agent):
     handoffs = sorted(p for p in Path("ai/handoffs").glob("*.md") if p.is_file())
     for existing_handoff in handoffs:
         safe_path(existing_handoff.as_posix())
-    # Match the checker's handoff discovery; do not replace existing session records.
-    if handoffs:
-        handoff = handoffs[-1].as_posix()
+    # Every writing run records its own immutable handoff, including repairs.
+    new_handoff = bool(plan) or state is None or not handoffs
+    if new_handoff:
+        while Path(handoff).exists():
+            time.sleep(0.05)
+            now = datetime.now(timezone.utc)
+            timestamp = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+            handoff = "ai/handoffs/" + now.strftime("%Y%m%dT%H%M%SZ") + "-" + agent + "-bootstrap.md"
+        inspect(handoff)
+        change(handoff, b"", "created bootstrap handoff")
     else:
-        if inspect(handoff) is not None:
-            raise Stop("Bootstrap handoff collision: " + handoff)
-        change(handoff, b"", "created first bootstrap handoff")
+        handoff = handoffs[-1].as_posix()
     if state is None:
         change("ai/STATE.md", (
             "# STATE\n<!-- Hand-maintained until agent tooling renders this automatically -->\n\n"
@@ -178,7 +184,7 @@ def run(agent):
         data = plan.get(name, originals[name]) or b""
         todos.extend(f"{name}:{n}: {line}" for n, line in
                      enumerate(data.decode(errors="replace").splitlines(), 1) if "TODO:" in line)
-    if not handoffs:
+    if new_handoff:
         content = (
             f"---\ntask: bootstrap\nagent: {agent}\nstarted: {timestamp}\nended: {timestamp}\n"
             f"branch: {json.dumps(branch)}\nbase_sha: {base}\nhead_sha: {base}\n"
@@ -246,7 +252,7 @@ def run(agent):
         print("Manual push after review: git push -u origin " + branch)
     print("Next action: review bootstrap; push manually if desired; fill verified TODOs.")
     print("\n--- ai-check output ---", flush=True)
-    result = subprocess.run([sys.executable, "-m", "ai_protocol.check"])
+    result = subprocess.run([sys.executable, "-m", "ai_protocol.check", "--allow-local"])
     print("ai-check exit code: " + str(result.returncode))
     return result.returncode
 
