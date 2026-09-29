@@ -24,4 +24,4 @@ Linux execution not verified.
 None. No push authorized.
 
 ## Latest handoff
-ai/handoffs/20260929T123045Z-codex-ai-bootstrap-v0.1.md
+ai/handoffs/20260929T124313Z-codex-bootstrap-review.md
