@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-protocol"
+dynamic = ["version"]
+description = "Git-based multi-agent repository protocol: readiness/closing checks and bootstrap templates."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = []
+
+[project.scripts]
+ai-check = "ai_protocol.check:cli"
+
+[tool.setuptools.dynamic]
+version = { attr = "ai_protocol.__version__" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
