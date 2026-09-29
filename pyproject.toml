@@ -12,9 +12,13 @@ dependencies = []
 
 [project.scripts]
 ai-check = "ai_protocol.check:cli"
+ai-bootstrap = "ai_protocol.bootstrap:cli"
 
 [tool.setuptools.dynamic]
 version = { attr = "ai_protocol.__version__" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+ai_protocol = ["templates/*.md"]

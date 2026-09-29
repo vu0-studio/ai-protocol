@@ -1,8 +1,37 @@
-# Bootstrap checklist
+# Bootstrap v0.1
 
-Manual for now (a human or an agent works through this checklist by hand). Automation is
-deliberately deferred until a second live repo has been bootstrapped this way -- see the
-protocol's decision record for why.
+The second live bootstrap met the agreed automation trigger. Install the same package with
+`pipx install git+https://github.com/vu0-studio/ai-protocol`, then run:
+
+```
+ai-bootstrap --agent codex
+```
+
+Run from any directory inside an existing Git work tree. The agent identifier must use
+lowercase letters/digits, optionally separated by single hyphens. No repository is initialized.
+Detached HEAD, an active merge/rebase, and missing Git identity cause refusal before writes.
+
+The command plans changes first, snapshots dirty file bytes and index entries, writes only
+eligible protocol files, stages explicit paths, and makes one `handoff: bootstrap <agent>`
+commit using `git commit --only`. Already-staged user changes remain staged and excluded.
+Existing dirty/ignored protocol files that need repair cause refusal before writes. Dirty
+submodules/directories, symlink/junction protocol paths, and assume-unchanged/skip-worktree
+files that need repair are conservatively refused. A detected concurrent change stops the
+commit; bootstrap does not reset, clean, stash, or roll back user work. If Git fails after
+writes, inspect the reported error and working tree before retrying. Avoid concurrent writers.
+Repository commit hooks are bypassed for this mechanical commit; none are installed.
+
+New files use LF. Existing AGENTS/STATE and all .gitattributes content remain untouched.
+Existing CLAUDE content is preserved byte-for-byte after the prepended import. Existing
+handoffs are reused when creating a missing STATE. A repeat run makes no empty commit.
+No dependencies, setup/test/lint/build execution, remote changes, or automatic push.
+
+Finally the existing checker runs as a separate process, its output is inherited verbatim,
+and its exit code is returned. Structural success can therefore still exit 1 for LOCAL-ONLY
+or BLOCKED. Read both the bootstrap report and the checker result. Review the local commit,
+push manually if desired, then fill placeholders only with verified facts.
+
+## Mechanical checklist
 
 Applying this to a repo means: create the minimum structure `ai-check` needs to report
 something other than "no protocol here" (see README.md), without guessing any repo-specific
@@ -26,7 +55,7 @@ fact it hasn't actually verified.
    `<UTC>`): what was created, what already existed, remaining TODOs, any blockers. `base_sha`
    is `HEAD` before bootstrap ran, or the literal string `none` in a brand-new empty repo. This
    handoff documents what bootstrap did, not a review of the project.
-7. Point `ai/STATE.md` at that handoff (its "Latest handoffs" section).
+7. If creating `ai/STATE.md`, point it at that handoff. Preserve an existing STATE unchanged.
 8. Stage explicit paths only -- never `git add -A`, so step 2's pre-existing changes can't leak
    into this commit by accident. One commit: `handoff: bootstrap <agent>`.
 9. Never create a remote and never push automatically. Print the push command

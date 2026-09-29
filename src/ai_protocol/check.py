@@ -21,7 +21,7 @@ import os, re, subprocess, sys
 
 from . import __version__
 
-ENV = dict(os.environ, GIT_TERMINAL_PROMPT="0", GCM_INTERACTIVE="never")
+ENV = dict(os.environ, GIT_TERMINAL_PROMPT="0", GCM_INTERACTIVE="never", GIT_OPTIONAL_LOCKS="0")
 ENV.setdefault("GIT_SSH_COMMAND", "ssh -o BatchMode=yes -o ConnectTimeout=15")
 results = []          # (level, name, detail)  level: PASS FAIL WARN INFO
 
@@ -72,10 +72,8 @@ def run_checks():
         rec("PASS" if rc == 0 else "FAIL", "remote read access (ls-remote)", "" if rc == 0 else out[:300])
         remote_ok = rc == 0
         if remote_ok:
-            rc, out = git("fetch", "origin")
-            rec("PASS" if rc == 0 else "FAIL", "git fetch origin", "" if rc == 0 else out[:300])
             if branch:
-                rc, out = git("push", "--dry-run", "origin", f"HEAD:refs/heads/{branch}")
+                rc, out = git("push", "--dry-run", "--no-verify", "origin", f"HEAD:refs/heads/{branch}")
                 rec("PASS" if rc == 0 else "FAIL", "push dry-run (auth and fast-forward only)",
                     "does not prove branch protection or server hooks" if rc == 0 else out[:300])
 
@@ -86,9 +84,9 @@ def run_checks():
             rc, cnt = git("rev-list", "--left-right", "--count", f"origin/{branch}...HEAD")
             behind, ahead = (cnt.split() + ["?", "?"])[:2]
             lvl = "PASS" if (behind, ahead) == ("0", "0") else "WARN"
-            rec(lvl, "vs origin/" + branch, f"behind {behind}, ahead {ahead}")
+            rec(lvl, "vs cached origin/" + branch, f"behind {behind}, ahead {ahead}")
         else:
-            rec("WARN", "vs origin/" + branch, "branch not on origin yet: first push needs -u")
+            rec("WARN", "vs cached origin/" + branch, "branch not on origin yet: first push needs -u")
 
     # tree
     rc, porcelain = git("status", "--porcelain")
