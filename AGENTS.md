@@ -5,3 +5,6 @@ Work on a task branch; preserve user changes. Never push without explicit author
 Use the standard library; ask before adding dependencies or changing architecture.
 Tests: python -m unittest discover tests (with src on PYTHONPATH or the package installed).
 Commit verified work and record an immutable UTC handoff. Never invent test results.
+
+This repository is PUBLIC. Handoffs, STATE and tasks must never
+mention other repositories, projects, machines, people or local paths.

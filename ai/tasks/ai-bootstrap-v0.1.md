@@ -1,6 +1,6 @@
 # ai-bootstrap v0.1
 
-Status: implemented and tested; local commit/handoff pending.
+Status: complete; implemented, tested, and committed locally. No push authorized.
 
 User-approved scope: sibling CLI, stdlib only, mechanical protocol scaffolding, isolated
 bootstrap commit, no push. Preserve dirty bytes and index entries. Existing checker

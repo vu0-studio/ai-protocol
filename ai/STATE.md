@@ -5,7 +5,7 @@ ai-bootstrap v0.1 is implemented on agent/codex/ai-bootstrap-v0.1.
 The tooling package now provides ai-check and ai-bootstrap using the standard library.
 
 ## Active tasks
-ai-bootstrap-v0.1: implementation and 28 tests pass; final handoff/commit pending.
+ai-bootstrap-v0.1: complete, tested, committed locally; no push authorized.
 
 ## Commands
 Test: .venv/Scripts/python.exe -m unittest discover tests -v
@@ -21,4 +21,4 @@ Linux execution not verified.
 None. No push authorized.
 
 ## Latest handoff
-ai/handoffs/20260929T122009Z-codex-bootstrap-implementation.md
+ai/handoffs/20260929T123045Z-codex-ai-bootstrap-v0.1.md
