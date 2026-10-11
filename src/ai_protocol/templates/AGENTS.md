@@ -9,7 +9,7 @@ Git is the source of truth. Chat memory is not. If it matters later, it is in th
 2. Read `ai/STATE.md`, your task file in `ai/tasks/`, and the newest file in `ai/handoffs/`.
 3. Compare the handoff's `head_sha` (or `base_sha`) with `git rev-parse HEAD`. If they differ, run
    `git log --stat <sha>..HEAD` before trusting anything written before.
-4. Do not trust a claim you can verify in under a minute. Re-run the checks in `ai/checks.yaml`.
+4. Do not trust a claim you can verify in under a minute. Re-run the verified commands listed in `ai/STATE.md` that your task can affect.
 5. Work only on your task's branch/worktree. Never commit to `main`/`master` directly unless the
    task is explicitly small, low-risk, and already approved by the PO (state this in the handoff).
 
@@ -43,12 +43,14 @@ components/entry points, the target platform, and what is explicitly out of scop
 - Ask the PO before: adding dependencies, changing the architecture, deleting data, force-pushing.
 
 ## 5. End of every session
-1. `ai-check --close` -- fix anything it reports before finishing.
+1. Update `ai/STATE.md`.
 2. Commit the work.
 3. Write a new immutable file `ai/handoffs/<UTC>-<agent>-<task>.md` (front matter: task, agent,
    started, ended, base_sha, head_sha, branch, tree, evidence) with sections "What I did",
    "Decisions made", "Not verified / known failures", "Open questions", "Next action" (exactly one).
-4. Commit as `handoff: <task-id> <agent>`.
+4. Commit it as `handoff: <task-id> <agent>`; it must be the last commit.
+5. Push the branch.
+6. Run `ai-check --close`; it must report READY. Fix what it lists and repeat.
 
 ## 6. Where things are
 - Rules: this file. Decisions: `docs/decisions/` (if this project uses ADRs).

@@ -34,7 +34,9 @@ Bootstrap bypasses commit hooks for its own commit; it does not install hooks.
    Review the single local bootstrap commit, fill verified placeholders, and push manually
    if desired. See `BOOTSTRAP.md` for the safety contract.
 2. Start every session with `ai-check`. If it reports `BLOCKED`, fix what it lists first.
-3. End every session with `ai-check --close`, then commit and write a handoff. See the
+3. End every session by updating `ai/STATE.md`, committing the work, writing a new immutable
+   handoff, committing it as `handoff: <task-id> <agent>` as the last commit, pushing the branch,
+   then running `ai-check --close`. It must report READY; fix what it lists and repeat. See the
    `src/ai_protocol/templates/AGENTS.md` this repo ships for the exact session-start/session-end procedure --
    copy it into the project repo during bootstrap and fill in its `TODO:` markers.
 
