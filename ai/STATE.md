@@ -4,6 +4,10 @@
 Session ordering and task-scoped verification guidance are corrected in the packaged template and README. Package version remains 0.2.0.
 The tooling package now provides ai-check and ai-bootstrap using the standard library.
 
+## Worktree folder rule (2026-10-25, Ressi, branch agent/ressi/worktree-folder-rule-20261025; NOT merged)
+
+- PO decision: every agent worktree lives only under `E:\Git\vu0-studio\_worktrees\<repo>--<task-id>` and is removed with `git worktree remove` after merge and push (branches are kept). Rule added to this repo's agent instructions (src/ai_protocol/templates/AGENTS.md). Code and docs that still build `<repo>-wt-<task>` paths are listed in kisa-env `docs/reports/worktree-folder-rule-20261025/PATHS-TO-CHANGE.md`; nothing else changed.
+
 ## Active tasks
 standards-fix: documentation and template corrections complete; branch push and fast-forward of master authorized.
 
