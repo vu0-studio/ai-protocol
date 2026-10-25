@@ -29,6 +29,7 @@ components/entry points, the target platform, and what is explicitly out of scop
 ## 4. Rules
 - One task, one branch `agent/<agent>/<task-id>`, one worktree when working in parallel; a single
   active agent may work directly on a feature branch if there is no parallelism risk.
+- Worktrees: Every agent worktree is created ONLY under `E:\Git\vu0-studio\_worktrees\<repo>--<task-id>`, never next to the repo (give `git worktree add` an absolute path). The folder `_worktrees` is not a Git repo and is never committed. After the task branch is merged and pushed, remove the worktree with `git worktree remove <path>`; branches are not deleted. Worktrees that already exist elsewhere are not moved by this rule.
 - Commit at every verified checkpoint. Prefix unfinished work with `wip:`.
 - Never end a session with a dirty tree. If the work is not ready, commit it as `wip:`.
 - Never write test results by hand. Run the actual check and cite real output.
